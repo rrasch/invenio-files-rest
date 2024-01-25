@@ -35,6 +35,8 @@ from .serializer import json_serializer
 from .signals import file_deleted, file_downloaded, file_uploaded
 from .tasks import merge_multipartobject, remove_file_data
 
+from invenio_files_rest.models import Location
+
 blueprint = Blueprint(
     "invenio_files_rest",
     __name__,
@@ -409,10 +411,21 @@ class LocationResource(ContentNegotiatedMethodView):
         super(LocationResource, self).__init__(*args, **kwargs)
 
     @need_location_permission("location-update", hidden=False)
-    def post(self):
-        """Create bucket."""
+    def post(self, location=None):
+        """Create bucket.
+
+        :param location: The bucket location (Default: ``None``)
+        """
+        if location:
+            location = Location.get_by_name(location)
+        else:
+            location = Location.default_location()
+
+        if not location:
+            abort(404, "Storage location not found")
+
         with db.session.begin_nested():
-            bucket = Bucket.create()
+            bucket = Bucket.create(location)
         db.session.commit()
         return self.make_response(
             data=bucket,
