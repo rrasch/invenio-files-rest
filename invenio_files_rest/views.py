@@ -35,6 +35,7 @@ from .serializer import json_serializer
 from .signals import file_deleted, file_downloaded, file_uploaded
 from .tasks import merge_multipartobject, remove_file_data
 
+from flask import current_app
 from invenio_files_rest.models import Location
 
 blueprint = Blueprint(
@@ -406,20 +407,30 @@ need_bucket_permission = partial(
 class LocationResource(ContentNegotiatedMethodView):
     """Service resource."""
 
+    post_args = {
+        "locname": fields.Str(
+            metadata={"location": "json", "load_from": "location"},
+            data_key="location",
+            load_default=None,
+        ),
+    }
+
     def __init__(self, *args, **kwargs):
         """Instantiate content negotiated view."""
         super(LocationResource, self).__init__(*args, **kwargs)
 
+    @use_kwargs(post_args)
     @need_location_permission("location-update", hidden=False)
-    def post(self, location=None):
+    def post(self, locname=None):
         """Create bucket.
 
         :param location: The bucket location (Default: ``None``)
         """
-        if location:
-            location = Location.get_by_name(location)
+        current_app.logger.info(f"{locname=}")
+        if locname:
+            location = Location.get_by_name(locname)
         else:
-            location = Location.default_location()
+            location = Location.get_default()
 
         if not location:
             abort(404, "Storage location not found")
