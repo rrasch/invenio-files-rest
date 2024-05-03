@@ -46,9 +46,8 @@ def test_post_bucket(app, client, headers, dummy_location, permissions, user, ex
     login_user(client, permissions[user])
 
     for data in params:
-        json_data = json.dumps(data)
         resp = client.post(
-            url_for("invenio_files_rest.location_api"), data=json_data, headers=headers
+            url_for("invenio_files_rest.location_api"), json=data, headers=headers
         )
         assert resp.status_code == expected
         if resp.status_code == 200:
@@ -76,8 +75,7 @@ def test_post_bucket_unknown_location(
     login_user(client, permissions[user])
 
     for data in params:
-        json_data = json.dumps(data)
         resp = client.post(
-            url_for("invenio_files_rest.location_api"), data=json_data, headers=headers
+            url_for("invenio_files_rest.location_api"), json=data, headers=headers
         )
         assert resp.status_code == expected
